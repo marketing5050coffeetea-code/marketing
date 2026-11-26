@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Đơn Noel theo cửa hàng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light dark;--bg:light-dark(#fbfaf6,#0f1a14);--card:light-dark(#fff,#16241c);--ink:light-dark(#14201a,#eef3ef);--mut:light-dark(#5b6b62,#9db1a5);--line:light-dark(#e3e6df,#26392e);--pine:#14532d;--red:light-dark(#b4232f,#ff6b73);--soft:light-dark(#eef5ef,#1c2e23)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Be Vietnam Pro",system-ui,sans-serif;overflow-x:clip}
+.band{padding:clamp(20px,3vw,40px) max(4vw,14px)}
+.top{background:var(--pine);color:#f3f7f2}
+.top h1{font-size:clamp(28px,4vw,44px);line-height:1.08;margin:0 0 6px;text-wrap:balance;font-weight:800}
+.top p{margin:0;color:#c9dccd;max-width:70ch}
+.kpis{display:flex;flex-wrap:wrap;gap:12px 32px;margin-top:20px}
+.kpi b{display:block;font-size:clamp(24px,3.4vw,36px);font-weight:800;white-space:nowrap}
+.kpi span{font-size:14px;color:#c9dccd}
+.kpi.big b{color:#ffd9dc}
+.wrap{max-width:1400px;margin:0 auto}
+h2{font-size:22px;margin:0 0 12px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+.chip{display:flex;align-items:center;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px 4px 3px 12px}
+.chip input{border:0;background:transparent;color:var(--ink);font:inherit;font-size:16px;width:9em;padding:6px 0}
+button,.btn{font:inherit;font-size:15px;min-height:40px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:0 14px;cursor:pointer}
+button.pri{background:var(--red);border-color:var(--red);color:#fff;font-weight:600}
+.chip button{min-height:32px;width:32px;padding:0;border-radius:50%;border:0;color:var(--mut)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.scroll{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:14px}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle;text-align:left}
+th{font-size:13px;color:var(--mut);font-weight:600;background:var(--soft);position:sticky;top:0}
+td.n,th.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.th{width:64px;height:64px;border-radius:10px;background:var(--soft);display:grid;place-items:center;overflow:hidden;font-size:11px;color:var(--mut);text-align:center;line-height:1.2}
+.th img{width:100%;height:100%;object-fit:cover}
+.code{font-weight:700;white-space:nowrap}
+.name{min-width:220px;max-width:340px}
+.name a{color:var(--ink);text-decoration:none}.name a:hover{text-decoration:underline}
+.var{font-size:13px;color:var(--mut)}
+td.q input{width:64px;font:inherit;font-size:16px;text-align:center;padding:8px 4px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+td.q input.on{border-color:var(--red);background:light-dark(#fdecee,#3a1c20);font-weight:700}
+tfoot td{font-weight:800;background:var(--soft)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.card h3{margin:0 0 4px;font-size:18px;display:flex;justify-content:space-between;gap:8px}
+.card h3 span{color:var(--red);white-space:nowrap}
+.card ul{list-style:none;margin:8px 0 0;padding:0}
+.card li{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px dashed var(--line);font-size:14px}
+.card li b{white-space:nowrap}
+.empty{color:var(--mut);font-size:14px}
+.note{font-size:13px;color:var(--mut);margin-top:8px}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--pine);color:#fff;padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+@media(prefers-reduced-motion:reduce){.toast{transition:none}}
+</style></head><body>
+<header class="band top"><div class="wrap">
+<h1>Đơn đồ trang trí Noel — shop trangtridep</h1>
+<p>Nhập số lượng từng món cho mỗi cửa hàng. Trang tự cộng tiền theo cửa hàng và tổng đơn.</p>
+<div class="kpis" id="kpis"></div>
+</div></header>
+
+<main class="band"><div class="wrap">
+<h2>Cửa hàng</h2>
+<div class="bar" id="stores"></div>
+<div class="bar">
+<button class="pri" id="add">+ Thêm cửa hàng</button>
+<button id="copy">Copy bảng tổng hợp</button>
+<label class="btn" style="display:inline-flex;align-items:center">Thay ảnh<input type="file" id="imgs" accept="image/*" multiple hidden></label>
+<button id="reset">Xoá số lượng</button>
+</div>
+<div class="scroll"><table id="grid"></table></div>
+<p class="note">Giá lấy từ giỏ hàng Shopee ngày 26/11/2026 (đã gồm giảm giá đang áp dụng), có thể thay đổi khi đặt. Bấm vào ảnh để mở ảnh lớn. Muốn thay ảnh: chọn file đặt tên theo mã (vd. <b>C71-1M8.png</b>) bằng nút "Thay ảnh".</p>
+
+<h2 style="margin-top:32px">Tổng hợp theo cửa hàng</h2>
+<div class="cards" id="cards"></div>
+</div></main>
+<div class="toast" id="toast"></div>
+
+<script>
+{
+const P=[
+["C71-1M8","Cây Thông PE Lá Xoăn C71","1.8M",2650000,"53750153160"],
+["KKC-15x30","Khinh khí cầu trang trí Noel kèm gấu bông","Đỏ trắng 15cm x 30cm",325000,"51669771404"],
+["KKC-20x40","Khinh khí cầu trang trí Noel kèm gấu bông","Đỏ trắng 20cm x 40cm",445000,"51669771404"],
+["LC09-A","Mô hình lính chì bằng gỗ","LC09-A 38cm",640000,"49618630619"],
+["LC03-C","Mô hình lính chì bằng gỗ","LC03-C 50cm",1200000,"49618630619"],
+["CTOG02-BO-1M8","Cây thông thần lùn CTOG02","Nam vải bố, 1m8",1950000,"44718077955"],
+["CTOG02-NHUNG-1M5","Cây thông thần lùn CTOG02","Nam nhung đỏ, 1m5",1350000,"44718077955"],
+["GAY12","Gậy kẹo Noel cao 1.1m GAY12","Đỏ đậm trơn",159000,"29845772011"],
+["TB07","Người tuyết bụng tròn chân co giãn","Người tuyết lớn TB07",445000,"29364889121"],
+["D156","Vòng hoa Noel D156 45cm kèm đèn","—",295000,"28515453870"],
+["BANG01-1M","Nơ vải siêu lớn 1 mét","1M nhung đỏ đậm BẰNG01",790000,"28314610920"],
+["KCS34-270","Dây lá thông kim KCS34","KCS34 270cm",525000,"26864895177"],
+["TB01-TUANLOC","Thú bông Noel chân lò xo TB01","TB01 tuần lộc",275000,"24703321973"],
+["LE04-50M","Đèn đom đóm dây xanh LE04","Vàng ấm 50m điện",455000,"24037555789"],
+["B9-2M7","Dây lá thông kết nơ sọc & quả thông B9","Dài 2.7m",435000,"23480541071"],
+["N18","Nón bọc lưng ghế N18","—",46291,"19548918492"],
+["BST03-G77","Giấy gói quà BST03","Bóng G77 lá mỏng xanh, set 5 tờ",38500,"19248789371"],
+["BST03-G15","Giấy gói quà BST03","Hoa tuyết đỏ G15, set 5 tờ",40700,"19248789371"],
+["KEONEN-7x270","Set 10 que keo nến silicon 7x270mm","—",37050,"14256603284"],
+["ONGGIA-30C","Ông già Noel đứng cao 30cm","Ông già đứng C",195000,"6660274301"],
+["GUT-TRANG-20","Dây gút nhựa bịch 100 sợi","Màu trắng 20cm",29000,"6631532398"],
+["MOCDAN-10","Combo 10 móc dán","10 móc trong suốt",18015,"3655920329"]
+].map(([code,name,v,price,id])=>({code,name,v,price,url:"https://shopee.vn/product/16948418/"+id}));
+
+const IMG={"C71-1M8": "vn-11134207-820l4-mg9d82kj1kb056", "KKC-15x30": "vn-11134207-81ztc-munhjxpd493ac1", "KKC-20x40": "vn-11134207-81ztc-munhjxpd493ac1", "LC09-A": "vn-11134207-81ztc-mtqgee2l5urq54", "LC03-C": "vn-11134207-81ztc-mtqgigthy2v690", "CTOG02-BO-1M8": "vn-11134207-81ztc-mtahysnh3b4aa6", "CTOG02-NHUNG-1M5": "vn-11134207-81ztc-mtahysnm0ao708", "GAY12": "vn-11134207-81ztc-mt0g1avj63ux7b", "TB07": "vn-11134207-7ras8-m1o2b7tcm1cj84", "D156": "vn-11134207-7ras8-m1ryja0ahbv7d1", "BANG01-1M": "vn-11134207-7ras8-m1tzglduiym72c", "KCS34-270": "vn-11134207-7ras8-m1o2y6r2hnzz8f", "TB01-TUANLOC": "vn-11134207-7r98o-lyme2rgy7ag145", "LE04-50M": "vn-11134207-7ras8-m2qf3brrtwqu8c", "B9-2M7": "vn-11134207-7r98o-lls0dy13ieov57", "N18": "755d6de151ff1694148bb4eb86b5bf6b", "BST03-G77": "vn-11134207-7ras8-m0x34k7opjcf80", "BST03-G15": "vn-11134207-7ras8-m0x2lsukzei5cf", "KEONEN-7x270": "9cbfc99046dd91288b8b19b38efec889", "ONGGIA-30C": "882062a703d8c1c4a4d3b90341d00c1b", "GUT-TRANG-20": "ddb56be42307cf713d8ee5839e02e76e", "MOCDAN-10": "vn-11134207-7r98o-ls2jhc8nn1z854"};const iu=c=>"https://down-vn.img.susercontent.com/file/"+IMG[c];
+const K="noel-order-v1";
+let S={stores:["Cửa hàng 1","Cửa hàng 2","Cửa hàng 3"],q:{}};
+try{const s=JSON.parse(localStorage.getItem(K));if(s&&s.stores)S=s}catch(e){}
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
+let IM={};try{IM=JSON.parse(localStorage.getItem(K+"-img"))||{}}catch(e){}
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const vnd=n=>Math.round(n).toLocaleString("vi-VN")+"₫";
+const qty=(si,ci)=>+(S.q[si+"|"+ci]||0);
+const $=id=>document.getElementById(id);
+
+function renderStores(){
+  $("stores").innerHTML=S.stores.map((s,i)=>`<div class="chip"><input data-s="${i}" value="${esc(s)}" aria-label="Tên cửa hàng"><button data-del="${i}" aria-label="Xoá cửa hàng">✕</button></div>`).join("");
+}
+function renderGrid(){
+  const head=`<thead><tr><th>Ảnh</th><th>Mã</th><th>Sản phẩm / phân loại</th><th class="n">Đơn giá</th>${S.stores.map(s=>`<th class="n">${esc(s)}</th>`).join("")}<th class="n">Tổng SL</th><th class="n">Thành tiền</th></tr></thead>`;
+  const body=P.map((p,pi)=>`<tr><td><div class="th"><a href="${iu(p.code)}" target="_blank" rel="noopener"><img src="${IM[p.code]||iu(p.code)}" alt="${esc(p.code)}" loading="lazy" referrerpolicy="no-referrer"></a></div></td><td class="code">${esc(p.code)}</td><td class="name"><a href="${p.url}" target="_blank" rel="noopener">${esc(p.name)}</a><div class="var">${esc(p.v)}</div></td><td class="n">${vnd(p.price)}</td>${S.stores.map((s,si)=>{const v=qty(si,pi);return `<td class="n q"><input type="number" min="0" inputmode="numeric" data-si="${si}" data-pi="${pi}" value="${v||""}" class="${v?"on":""}" aria-label="${esc(s)} – ${esc(p.code)}"></td>`}).join("")}<td class="n" id="tq${pi}"></td><td class="n" id="tm${pi}"></td></tr>`).join("");
+  const foot=`<tfoot><tr><td colspan="4">Tổng</td>${S.stores.map((s,si)=>`<td class="n" id="sf${si}"></td>`).join("")}<td class="n" id="fq"></td><td class="n" id="fm"></td></tr></tfoot>`;
+  $("grid").innerHTML=head+"<tbody>"+body+"</tbody>"+foot;
+  totals();
+}
+function totals(){
+  let GQ=0,GM=0;
+  P.forEach((p,pi)=>{let q=0;S.stores.forEach((s,si)=>q+=qty(si,pi));GQ+=q;GM+=q*p.price;
+    $("tq"+pi).textContent=q||"";$("tm"+pi).textContent=q?vnd(q*p.price):"";});
+  const per=S.stores.map((s,si)=>{const items=P.map((p,pi)=>({p,q:qty(si,pi)})).filter(x=>x.q);return{s,items,sum:items.reduce((a,x)=>a+x.q*x.p.price,0),n:items.reduce((a,x)=>a+x.q,0)}});
+  per.forEach((x,si)=>{const c=$("sf"+si);if(c)c.textContent=x.sum?vnd(x.sum):""});
+  $("fq").textContent=GQ||"";$("fm").textContent=GM?vnd(GM):"";
+  $("kpis").innerHTML=`<div class="kpi big"><b>${vnd(GM)}</b><span>Tổng tiền đơn</span></div><div class="kpi"><b>${GQ}</b><span>Tổng số món</span></div><div class="kpi"><b>${per.filter(x=>x.n).length}/${S.stores.length}</b><span>Cửa hàng đã nhập</span></div><div class="kpi"><b>${P.length}</b><span>Sản phẩm</span></div>`;
+  $("cards").innerHTML=per.map(x=>`<div class="card"><h3>${esc(x.s)}<span>${vnd(x.sum)}</span></h3><div class="empty">${x.n} món</div>${x.items.length?`<ul>${x.items.map(i=>`<li><span><b>${i.q} ×</b> ${esc(i.p.code)} · ${esc(i.p.name)}</span><b>${vnd(i.q*i.p.price)}</b></li>`).join("")}</ul>`:`<p class="empty">Chưa nhập số lượng.</p>`}</div>`).join("");
+  window._per=per;window._G=[GQ,GM];
+}
+function all(){renderStores();renderGrid()}
+
+$("grid").addEventListener("input",e=>{const t=e.target;if(!t.dataset.si)return;const v=Math.max(0,parseInt(t.value)||0);const k=t.dataset.si+"|"+t.dataset.pi;if(v)S.q[k]=v;else delete S.q[k];t.classList.toggle("on",!!v);save();totals()});
+$("stores").addEventListener("input",e=>{const i=e.target.dataset.s;if(i==null)return;S.stores[i]=e.target.value;save();const th=$("grid").rows[0].cells[4+ +i];if(th)th.textContent=e.target.value;totals()});
+$("stores").addEventListener("click",e=>{const i=e.target.dataset.del;if(i==null)return;if(S.stores.length<2)return toast("Cần ít nhất 1 cửa hàng");
+  const nq={};for(const k in S.q){const[a,b]=k.split("|").map(Number);if(a==i)continue;nq[(a>i?a-1:a)+"|"+b]=S.q[k]}S.q=nq;S.stores.splice(i,1);save();all()});
+$("add").addEventListener("click",()=>{S.stores.push("Cửa hàng "+(S.stores.length+1));save();all();const ins=$("stores").querySelectorAll("input");ins[ins.length-1].select()});
+$("reset").addEventListener("click",e=>{if(e.target.dataset.c){S.q={};save();renderGrid();e.target.textContent="Xoá số lượng";delete e.target.dataset.c}else{e.target.dataset.c=1;e.target.textContent="Bấm lần nữa để xoá";setTimeout(()=>{e.target.textContent="Xoá số lượng";delete e.target.dataset.c},3000)}});
+$("copy").addEventListener("click",async()=>{const L=[];(window._per||[]).forEach(x=>{L.push(`${x.s}: ${vnd(x.sum)} (${x.n} món)`);x.items.forEach(i=>L.push(`  - ${i.q} x ${i.p.code} ${i.p.name} (${i.p.v}) = ${vnd(i.q*i.p.price)}`))});L.push(`TỔNG: ${window._G[0]} món – ${vnd(window._G[1])}`);
+  try{await navigator.clipboard.writeText(L.join("\n"));toast("Đã copy bảng tổng hợp")}catch(e){toast("Trình duyệt chặn copy")}});
+$("imgs").addEventListener("change",async e=>{let n=0;for(const f of e.target.files){const base=f.name.replace(/\.[^.]+$/,"").toUpperCase();const p=P.find(p=>p.code.toUpperCase()===base);if(!p)continue;
+  IM[p.code]=await shrink(f);n++}try{localStorage.setItem(K+"-img",JSON.stringify(IM))}catch(err){toast("Ảnh hiện tạm, không lưu được")}renderGrid();toast(`Đã gắn ${n} ảnh`);e.target.value=""});
+function shrink(f){return new Promise(r=>{const img=new Image();img.onload=()=>{const c=document.createElement("canvas");c.width=c.height=160;const s=Math.min(img.width,img.height);c.getContext("2d").drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,160,160);r(c.toDataURL("image/jpeg",.8));URL.revokeObjectURL(img.src)};img.src=URL.createObjectURL(f)})}
+let tt;function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("show"),2000)}
+all();
+}
+</script></body></html>
