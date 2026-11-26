@@ -18,11 +18,17 @@ body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Be Vietnam Pr
 .wrap{max-width:1400px;margin:0 auto}
 h2{font-size:22px;margin:0 0 12px}
 .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
-.chip{display:flex;align-items:center;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px 4px 3px 12px}
-.chip input{border:0;background:transparent;color:var(--ink);font:inherit;font-size:16px;width:9em;padding:6px 0}
+.stores{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:10px;margin-bottom:14px}
+.st{position:relative;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 44px 10px 12px}
+.st input{display:block;width:100%;border:0;background:transparent;color:var(--ink);font:inherit;font-size:16px;padding:4px 0}
+.st input.nm{font-weight:700}
+.st input.ad{font-size:14px;color:var(--mut)}
+.st a{font-size:13px;color:var(--red)}
+.st .del{position:absolute;top:6px;right:6px;min-height:32px;width:32px;padding:0;border-radius:50%;border:0;color:var(--mut)}
+.addr{font-size:13px;color:var(--mut);margin:0 0 4px}
+.addr a{color:var(--red)}
 button,.btn{font:inherit;font-size:15px;min-height:40px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:0 14px;cursor:pointer}
 button.pri{background:var(--red);border-color:var(--red);color:#fff;font-weight:600}
-.chip button{min-height:32px;width:32px;padding:0;border-radius:50%;border:0;color:var(--mut)}
 button:focus-visible,input:focus-visible{outline:3px solid var(--red);outline-offset:2px}
 .scroll{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:14px}
 table{border-collapse:collapse;width:100%;font-size:15px}
@@ -59,7 +65,7 @@ tfoot td{font-weight:800;background:var(--soft)}
 
 <main class="band"><div class="wrap">
 <h2>Cửa hàng</h2>
-<div class="bar" id="stores"></div>
+<div class="stores" id="stores"></div>
 <div class="bar">
 <button class="pri" id="add">+ Thêm cửa hàng</button>
 <button id="copy">Copy bảng tổng hợp</button>
@@ -71,6 +77,8 @@ tfoot td{font-weight:800;background:var(--soft)}
 
 <h2 style="margin-top:32px">Tổng hợp theo cửa hàng</h2>
 <div class="cards" id="cards"></div>
+<h2 style="margin-top:32px">Gom theo điểm giao hàng</h2>
+<div class="cards" id="ship"></div>
 </div></main>
 <div class="toast" id="toast"></div>
 
@@ -103,8 +111,18 @@ const P=[
 
 const IMG={"C71-1M8": "vn-11134207-820l4-mg9d82kj1kb056", "KKC-15x30": "vn-11134207-81ztc-munhjxpd493ac1", "KKC-20x40": "vn-11134207-81ztc-munhjxpd493ac1", "LC09-A": "vn-11134207-81ztc-mtqgee2l5urq54", "LC03-C": "vn-11134207-81ztc-mtqgigthy2v690", "CTOG02-BO-1M8": "vn-11134207-81ztc-mtahysnh3b4aa6", "CTOG02-NHUNG-1M5": "vn-11134207-81ztc-mtahysnm0ao708", "GAY12": "vn-11134207-81ztc-mt0g1avj63ux7b", "TB07": "vn-11134207-7ras8-m1o2b7tcm1cj84", "D156": "vn-11134207-7ras8-m1ryja0ahbv7d1", "BANG01-1M": "vn-11134207-7ras8-m1tzglduiym72c", "KCS34-270": "vn-11134207-7ras8-m1o2y6r2hnzz8f", "TB01-TUANLOC": "vn-11134207-7r98o-lyme2rgy7ag145", "LE04-50M": "vn-11134207-7ras8-m2qf3brrtwqu8c", "B9-2M7": "vn-11134207-7r98o-lls0dy13ieov57", "N18": "755d6de151ff1694148bb4eb86b5bf6b", "BST03-G77": "vn-11134207-7ras8-m0x34k7opjcf80", "BST03-G15": "vn-11134207-7ras8-m0x2lsukzei5cf", "KEONEN-7x270": "9cbfc99046dd91288b8b19b38efec889", "ONGGIA-30C": "882062a703d8c1c4a4d3b90341d00c1b", "GUT-TRANG-20": "ddb56be42307cf713d8ee5839e02e76e", "MOCDAN-10": "vn-11134207-7r98o-ls2jhc8nn1z854"};const iu=c=>"https://down-vn.img.susercontent.com/file/"+IMG[c];
 const K="noel-order-v1";
-let S={stores:["Cửa hàng 1","Cửa hàng 2","Cửa hàng 3"],q:{}};
-try{const s=JSON.parse(localStorage.getItem(K));if(s&&s.stores)S=s}catch(e){}
+const GM="https://www.google.com/maps/place/";
+const DEF=[
+{n:"5050 Sala",a:"22-24 Nguyễn Cơ Thạch, An Khánh, TP. Hồ Chí Minh",m:GM+"5050+Coffee+Tea+-+Sala/@10.7677647,106.7259231,17z/data=!4m6!3m5!1s0x3175259620e9bc77:0xc831785ae9df006!8m2!3d10.7677647!4d106.7259231"},
+{n:"5050 Phú Mỹ Hưng",a:"68 Hà Huy Tập, KĐT Phú Mỹ Hưng, Tân Hưng, TP. Hồ Chí Minh",m:GM+"5050+Coffee+Tea+-+Ph%C3%BA+M%E1%BB%B9+H%C6%B0ng/@10.7267002,106.7121009,17z/data=!4m6!3m5!1s0x31752f0255fdb169:0xf2930c10dfd47663!8m2!3d10.7267002!4d106.7121009"},
+{n:"5050 Quang Vinh",a:"Căn B1 Cách Mạng Tháng 8, KDC, Trấn Biên, Đồng Nai",m:GM+"5050+Coffee+Tea+-+Quang+Vinh/@10.9529071,106.8088108,17z/data=!4m6!3m5!1s0x3174d966622257d9:0x7d7103edf2eef48e!8m2!3d10.9529071!4d106.8088108"},
+{n:"5050 Trấn Biên (Bờ Sông)",a:"11/4b Khu Phố 3, Trấn Biên, Đồng Nai",m:GM+"5050+Coffee+-+B%E1%BB%9D+S%C3%B4ng/@10.9553585,106.789579,17z/data=!4m6!3m5!1s0x3174d92b33b4a869:0xe9d47fbddcb587ef!8m2!3d10.9553585!4d106.789579"},
+{n:"Cuốn Cuốn",a:"Giao chung về 5050 Sala",m:"",via:"5050 Sala"}];
+let S={stores:DEF.map(x=>({...x})),q:{}};
+try{const s=JSON.parse(localStorage.getItem(K));if(s&&s.stores){S=s;
+  if(typeof S.stores[0]==="string"){const old=["Cửa hàng 1","Cửa hàng 2","Cửa hàng 3"];
+    S.stores=(S.stores.join()===old.join()?DEF.map(x=>({...x})):S.stores.map(n=>DEF.find(d=>d.n===n)||{n,a:"",m:""}));}}}catch(e){}
+const dest=st=>{if(st.via){const v=S.stores.find(x=>x.n===st.via);if(v)return v}return st};
 const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
 let IM={};try{IM=JSON.parse(localStorage.getItem(K+"-img"))||{}}catch(e){}
 const esc=t=>String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -113,11 +131,11 @@ const qty=(si,ci)=>+(S.q[si+"|"+ci]||0);
 const $=id=>document.getElementById(id);
 
 function renderStores(){
-  $("stores").innerHTML=S.stores.map((s,i)=>`<div class="chip"><input data-s="${i}" value="${esc(s)}" aria-label="Tên cửa hàng"><button data-del="${i}" aria-label="Xoá cửa hàng">✕</button></div>`).join("");
+  $("stores").innerHTML=S.stores.map((s,i)=>`<div class="st"><input class="nm" data-s="${i}" data-f="n" value="${esc(s.n)}" aria-label="Tên cửa hàng"><input class="ad" data-s="${i}" data-f="a" value="${esc(s.a||"")}" placeholder="Địa chỉ giao hàng" aria-label="Địa chỉ ${esc(s.n)}">${s.m?`<a href="${esc(s.m)}" target="_blank" rel="noopener">Xem bản đồ</a>`:""}<button class="del" data-del="${i}" aria-label="Xoá cửa hàng">✕</button></div>`).join("");
 }
 function renderGrid(){
-  const head=`<thead><tr><th>Ảnh</th><th>Mã</th><th>Sản phẩm / phân loại</th><th class="n">Đơn giá</th>${S.stores.map(s=>`<th class="n">${esc(s)}</th>`).join("")}<th class="n">Tổng SL</th><th class="n">Thành tiền</th></tr></thead>`;
-  const body=P.map((p,pi)=>`<tr><td><div class="th"><a href="${iu(p.code)}" target="_blank" rel="noopener"><img src="${IM[p.code]||iu(p.code)}" alt="${esc(p.code)}" loading="lazy" referrerpolicy="no-referrer"></a></div></td><td class="code">${esc(p.code)}</td><td class="name"><a href="${p.url}" target="_blank" rel="noopener">${esc(p.name)}</a><div class="var">${esc(p.v)}</div></td><td class="n">${vnd(p.price)}</td>${S.stores.map((s,si)=>{const v=qty(si,pi);return `<td class="n q"><input type="number" min="0" inputmode="numeric" data-si="${si}" data-pi="${pi}" value="${v||""}" class="${v?"on":""}" aria-label="${esc(s)} – ${esc(p.code)}"></td>`}).join("")}<td class="n" id="tq${pi}"></td><td class="n" id="tm${pi}"></td></tr>`).join("");
+  const head=`<thead><tr><th>Ảnh</th><th>Mã</th><th>Sản phẩm / phân loại</th><th class="n">Đơn giá</th>${S.stores.map(s=>`<th class="n">${esc(s.n)}</th>`).join("")}<th class="n">Tổng SL</th><th class="n">Thành tiền</th></tr></thead>`;
+  const body=P.map((p,pi)=>`<tr><td><div class="th"><a href="${iu(p.code)}" target="_blank" rel="noopener"><img src="${IM[p.code]||iu(p.code)}" alt="${esc(p.code)}" loading="lazy" referrerpolicy="no-referrer"></a></div></td><td class="code">${esc(p.code)}</td><td class="name"><a href="${p.url}" target="_blank" rel="noopener">${esc(p.name)}</a><div class="var">${esc(p.v)}</div></td><td class="n">${vnd(p.price)}</td>${S.stores.map((s,si)=>{const v=qty(si,pi);return `<td class="n q"><input type="number" min="0" inputmode="numeric" data-si="${si}" data-pi="${pi}" value="${v||""}" class="${v?"on":""}" aria-label="${esc(s.n)} – ${esc(p.code)}"></td>`}).join("")}<td class="n" id="tq${pi}"></td><td class="n" id="tm${pi}"></td></tr>`).join("");
   const foot=`<tfoot><tr><td colspan="4">Tổng</td>${S.stores.map((s,si)=>`<td class="n" id="sf${si}"></td>`).join("")}<td class="n" id="fq"></td><td class="n" id="fm"></td></tr></tfoot>`;
   $("grid").innerHTML=head+"<tbody>"+body+"</tbody>"+foot;
   totals();
@@ -130,18 +148,21 @@ function totals(){
   per.forEach((x,si)=>{const c=$("sf"+si);if(c)c.textContent=x.sum?vnd(x.sum):""});
   $("fq").textContent=GQ||"";$("fm").textContent=GM?vnd(GM):"";
   $("kpis").innerHTML=`<div class="kpi big"><b>${vnd(GM)}</b><span>Tổng tiền đơn</span></div><div class="kpi"><b>${GQ}</b><span>Tổng số món</span></div><div class="kpi"><b>${per.filter(x=>x.n).length}/${S.stores.length}</b><span>Cửa hàng đã nhập</span></div><div class="kpi"><b>${P.length}</b><span>Sản phẩm</span></div>`;
-  $("cards").innerHTML=per.map(x=>`<div class="card"><h3>${esc(x.s)}<span>${vnd(x.sum)}</span></h3><div class="empty">${x.n} món</div>${x.items.length?`<ul>${x.items.map(i=>`<li><span><b>${i.q} ×</b> ${esc(i.p.code)} · ${esc(i.p.name)}</span><b>${vnd(i.q*i.p.price)}</b></li>`).join("")}</ul>`:`<p class="empty">Chưa nhập số lượng.</p>`}</div>`).join("");
-  window._per=per;window._G=[GQ,GM];
+  $("cards").innerHTML=per.map(x=>`<div class="card"><h3>${esc(x.s.n)}<span>${vnd(x.sum)}</span></h3><p class="addr">${esc(x.s.a||"Chưa có địa chỉ")}${x.s.m?` · <a href="${esc(x.s.m)}" target="_blank" rel="noopener">Bản đồ</a>`:""}</p><div class="empty">${x.n} món</div>${x.items.length?`<ul>${x.items.map(i=>`<li><span><b>${i.q} ×</b> ${esc(i.p.code)} · ${esc(i.p.name)}</span><b>${vnd(i.q*i.p.price)}</b></li>`).join("")}</ul>`:`<p class="empty">Chưa nhập số lượng.</p>`}</div>`).join("");
+  const G=[];per.forEach(x=>{const d=dest(x.s);let g=G.find(g=>g.d===d);if(!g)G.push(g={d,st:[],items:{},sum:0,n:0});g.st.push(x.s.n);g.sum+=x.sum;g.n+=x.n;x.items.forEach(i=>{g.items[i.p.code]=(g.items[i.p.code]||{p:i.p,q:0});g.items[i.p.code].q+=i.q})});
+  $("ship").innerHTML=G.map(g=>`<div class="card"><h3>${esc(g.d.n)}<span>${vnd(g.sum)}</span></h3><p class="addr">${esc(g.d.a||"Chưa có địa chỉ")}${g.d.m?` · <a href="${esc(g.d.m)}" target="_blank" rel="noopener">Bản đồ</a>`:""}</p><div class="empty">${g.n} món · gồm hàng của ${g.st.map(esc).join(", ")}</div>${g.n?`<ul>${Object.values(g.items).map(i=>`<li><span><b>${i.q} ×</b> ${esc(i.p.code)} · ${esc(i.p.name)}</span><b>${vnd(i.q*i.p.price)}</b></li>`).join("")}</ul>`:""}</div>`).join("");
+  window._per=per;window._G=[GQ,GM];window._ship=G;
 }
 function all(){renderStores();renderGrid()}
 
 $("grid").addEventListener("input",e=>{const t=e.target;if(!t.dataset.si)return;const v=Math.max(0,parseInt(t.value)||0);const k=t.dataset.si+"|"+t.dataset.pi;if(v)S.q[k]=v;else delete S.q[k];t.classList.toggle("on",!!v);save();totals()});
-$("stores").addEventListener("input",e=>{const i=e.target.dataset.s;if(i==null)return;S.stores[i]=e.target.value;save();const th=$("grid").rows[0].cells[4+ +i];if(th)th.textContent=e.target.value;totals()});
+$("stores").addEventListener("input",e=>{const i=e.target.dataset.s;if(i==null)return;const f=e.target.dataset.f;const st=S.stores[i];
+  if(f==="n"){const old=st.n;st.n=e.target.value;S.stores.forEach(x=>{if(x.via===old)x.via=st.n});const th=$("grid").rows[0].cells[4+ +i];if(th)th.textContent=st.n}else st.a=e.target.value;save();totals()});
 $("stores").addEventListener("click",e=>{const i=e.target.dataset.del;if(i==null)return;if(S.stores.length<2)return toast("Cần ít nhất 1 cửa hàng");
   const nq={};for(const k in S.q){const[a,b]=k.split("|").map(Number);if(a==i)continue;nq[(a>i?a-1:a)+"|"+b]=S.q[k]}S.q=nq;S.stores.splice(i,1);save();all()});
-$("add").addEventListener("click",()=>{S.stores.push("Cửa hàng "+(S.stores.length+1));save();all();const ins=$("stores").querySelectorAll("input");ins[ins.length-1].select()});
+$("add").addEventListener("click",()=>{S.stores.push({n:"Cửa hàng "+(S.stores.length+1),a:"",m:""});save();all();const ins=$("stores").querySelectorAll("input.nm");ins[ins.length-1].select()});
 $("reset").addEventListener("click",e=>{if(e.target.dataset.c){S.q={};save();renderGrid();e.target.textContent="Xoá số lượng";delete e.target.dataset.c}else{e.target.dataset.c=1;e.target.textContent="Bấm lần nữa để xoá";setTimeout(()=>{e.target.textContent="Xoá số lượng";delete e.target.dataset.c},3000)}});
-$("copy").addEventListener("click",async()=>{const L=[];(window._per||[]).forEach(x=>{L.push(`${x.s}: ${vnd(x.sum)} (${x.n} món)`);x.items.forEach(i=>L.push(`  - ${i.q} x ${i.p.code} ${i.p.name} (${i.p.v}) = ${vnd(i.q*i.p.price)}`))});L.push(`TỔNG: ${window._G[0]} món – ${vnd(window._G[1])}`);
+$("copy").addEventListener("click",async()=>{const L=[];(window._per||[]).forEach(x=>{L.push(`${x.s.n}: ${vnd(x.sum)} (${x.n} món) – giao: ${dest(x.s).a||"chưa có địa chỉ"}`);x.items.forEach(i=>L.push(`  - ${i.q} x ${i.p.code} ${i.p.name} (${i.p.v}) = ${vnd(i.q*i.p.price)}`))});L.push(`TỔNG: ${window._G[0]} món – ${vnd(window._G[1])}`);
   try{await navigator.clipboard.writeText(L.join("\n"));toast("Đã copy bảng tổng hợp")}catch(e){toast("Trình duyệt chặn copy")}});
 $("imgs").addEventListener("change",async e=>{let n=0;for(const f of e.target.files){const base=f.name.replace(/\.[^.]+$/,"").toUpperCase();const p=P.find(p=>p.code.toUpperCase()===base);if(!p)continue;
   IM[p.code]=await shrink(f);n++}try{localStorage.setItem(K+"-img",JSON.stringify(IM))}catch(err){toast("Ảnh hiện tạm, không lưu được")}renderGrid();toast(`Đã gắn ${n} ảnh`);e.target.value=""});
